@@ -6,6 +6,10 @@ STARTUP_TIMEOUT=${STARTUP_TIMEOUT:-120}
 export GODEBUG="x509ignoreCN=0"
 
 sanitize_cgroups() {
+  if [ -e /sys/fs/cgroup/cgroup.controllers ]; then
+    return
+  fi
+
   mkdir -p /sys/fs/cgroup
   mountpoint -q /sys/fs/cgroup || \
     mount -t tmpfs -o uid=0,gid=0,mode=0755 cgroup /sys/fs/cgroup
@@ -44,7 +48,7 @@ sanitize_cgroups() {
     fi
   done
 
-  if ! test -e /sys/fs/cgroup/systemd ; then
+  if [ ! -e /sys/fs/cgroup/systemd ] && [ $(cat /proc/self/cgroup | grep '^1:name=openrc:' | wc -l) -eq 0 ]; then
     mkdir /sys/fs/cgroup/systemd
     mount -t cgroup -o none,name=systemd none /sys/fs/cgroup/systemd
   fi
@@ -97,6 +101,7 @@ start_docker() {
   trap stop_docker EXIT
 
   if ! timeout ${STARTUP_TIMEOUT} bash -ce 'while true; do try_start && break; done'; then
+    [ -f "$LOG_FILE" ] && cat "${LOG_FILE}"
     echo Docker failed to start within ${STARTUP_TIMEOUT} seconds.
     return 1
   fi
@@ -120,7 +125,9 @@ log_in() {
     echo "${password}" | docker login -u "${username}" --password-stdin ${registry}
   else
     mkdir -p ~/.docker
-    echo '{"credsStore":"ecr-login"}' >> ~/.docker/config.json
+    touch ~/.docker/config.json
+    # This ensures the resulting JSON object remains syntactically valid
+    echo "$(cat ~/.docker/config.json){\"credsStore\":\"ecr-login\"}" | jq -s add > ~/.docker/config.json
   fi
 }
 

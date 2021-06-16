@@ -216,6 +216,9 @@ version is the image's digest.
 * `dockerfile`: *Optional.* The path of the `Dockerfile` in the directory if
   it's not at the root of the directory.
 
+* `docker_buildkit`: *Optional.* This enables a Docker BuildKit build. The value
+  should be set to 1 if applicable.
+
 * `import_file`: *Optional.* A path to a file to `docker import` and then push.
 
 * `labels`: *Optional.* A map of labels that will be added to the image.
@@ -325,7 +328,7 @@ Run the tests with the following commands for both `alpine` and `ubuntu` images:
 
 ```sh
 docker build -t docker-image-resource -f dockerfiles/alpine/Dockerfile .
-docker build -t docker-image-resource -f dockerfiles/ubuntu/Dockerfile .
+docker build -t docker-image-resource -f dockerfiles/ubuntu/Dockerfile --build-arg base_image=ubuntu:latest .
 ```
 
 To use the newly built image, push it to a docker registry that's accessible to

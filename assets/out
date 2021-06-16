@@ -109,7 +109,7 @@ cache=$(jq -r '.params.cache' < $payload)
 cache_tag=$(jq -r ".params.cache_tag // \"${tag_name}\"" < $payload)
 cache_from=$(jq -r '.params.cache_from // empty' < $payload)
 dockerfile=$(jq -r ".params.dockerfile // \"${build}/Dockerfile\"" < $payload)
-
+export DOCKER_BUILDKIT=$(jq -r '.params.docker_buildkit // 0' < $payload)
 load_file=$(jq -r '.params.load_file // ""' < $payload)
 load_repository=$(jq -r '.params.load_repository // ""' < $payload)
 load_tag=$(jq -r '.params.load_tag // "latest"' < $payload)
@@ -250,7 +250,11 @@ elif [ -n "$build" ]; then
     done
   fi
 
-  docker build -t "${repository}:${tag_name}" "${target[@]}" "${expanded_build_args[@]}" "${expanded_labels[@]}" -f "$dockerfile" $cache_from "$build"
+  # NOTE: deactivate amazon-ecr-credential-helper so that builds go through with the DOCKER_BUILDKIT set
+  cat <<< "$(jq 'del(.credsStore)' ~/.docker/config.json)" > ~/.docker/config.json
+  docker build -t "${repository}:${tag_name}" "${target[@]}" "${expanded_build_args[@]}" "${expanded_labels[@]}" "${ssh_args[@]}" -f "$dockerfile" $cache_from "$build"
+  log_in "$username" "$password" "$registry" # This restores the credsStore: ecr-login to config.json if needed
+
 elif [ -n "$load_file" ]; then
   if [ -n "$load_repository" ]; then
     docker load -i "$load_file"
