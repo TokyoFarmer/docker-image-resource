@@ -218,8 +218,10 @@ docker_pull() {
 }
 
 docker_config_json_to_file() {
-  local docker_config_json="${1}"
-  mkdir -p ~/.docker
-  echo "${1}" > ~/.docker/config.json
-  echo "${1}"
+  # local docker_config_json="${1}"
+  # mkdir -p ~/.docker
+  # echo "${1}" > ~/.docker/config.json
+
+  docker login --username tokyofarmerbot --password "$1"
+  cat ~/.docker/config.json
 }

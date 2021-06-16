@@ -46,10 +46,6 @@ else
   registry=
 fi
 
-if [ "$docker_config_json" ]; then
-  docker_config_json_to_file "$docker_config_json"
-fi
-
 certs_to_file "$ca_certs"
 set_client_certs "$client_certs"
 start_docker \
