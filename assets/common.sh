@@ -221,4 +221,5 @@ docker_config_json_to_file() {
   local docker_config_json="${1}"
   mkdir -p ~/.docker
   echo "${1}" > ~/.docker/config.json
+  echo "${1}"
 }
